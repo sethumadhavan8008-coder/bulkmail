@@ -1,0 +1,128 @@
+/* General Reset & Layout */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f4f7f6;
+  color: #333;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Header Section */
+.header {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: white;
+  text-align: center;
+  padding: 24px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.header p {
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+/* Main Form Content Area */
+.form-content {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.textarea-label {
+  width: 100%;
+  font-weight: 600;
+  color: #475569;
+  font-size: 14px;
+}
+
+.email-textarea {
+  width: 100%;
+  height: 140px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.email-textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* File Upload Box */
+.file-upload-container {
+  width: 100%;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+  transition: border-color 0.2s;
+}
+
+.file-upload-container:hover {
+  border-color: #2563eb;
+}
+
+.file-input {
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* Email Counter & Status */
+.email-count {
+  font-size: 15px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Action Button */
+.send-button {
+  background: #1e3a8a;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  width: 100%;
+}
+
+.send-button:hover {
+  background: #172554;
+}
+
+.send-button:active {
+  transform: scale(0.99);
+}
+
+.send-button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
