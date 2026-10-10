@@ -1,8 +1,9 @@
+
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration
 const corsOptions = {
     origin: [
-        "https://depfront.vercel.app",
+        "https://bulkmail-n2zx.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000"
     ],
@@ -18,55 +19,51 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-// Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect(
-    process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/passkey"
-)
-.then(() => {
-    console.log("DB Connected");
-})
-.catch((error) => {
-    console.error("MongoDB connection failed:", error.message);
-});
+if (process.env.MONGODB_URI) {
+    mongoose
+        .connect(process.env.MONGODB_URI)
+        .then(() => console.log("MongoDB connected successfully"))
+        .catch((error) =>
+            console.error("MongoDB connection failed:", error.message)
+        );
+} else {
+    console.warn(
+        "MONGODB_URI is not configured. Database features are unavailable."
+    );
+}
 
-// Gmail transporter
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+// Verify required Resend environment variables
+function checkEmailConfiguration() {
+    if (!process.env.RESEND_API_KEY) {
+        throw new Error("RESEND_API_KEY is not configured on the server.");
     }
-});
 
-// Email template
-const emailTemplate = (message, recipient) => ({
-    from: process.env.EMAIL_USER,
-    to: recipient,
-    subject: "You get Text Message from Your App!",
-    text: message
-});
+    if (!process.env.EMAIL_FROM) {
+        throw new Error("EMAIL_FROM is not configured on the server.");
+    }
+}
 
-// Send emails
+// Send emails using the Resend HTTPS API
+async function sendMails({ message, emailList, subject }) {
+    checkEmailConfiguration();
 
-async function sendMails({ message, emailList }) {
     for (const recipient of emailList) {
         const response = await fetch(
             "https://api.resend.com/emails",
             {
                 method: "POST",
                 headers: {
-                    "Authorization":
-                        `Bearer ${process.env.RESEND_API_KEY}`,
+                    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     from: process.env.EMAIL_FROM,
                     to: [recipient],
-                    subject: "Message from BulkMail",
+                    subject: subject || "Message from BulkMail",
                     text: message
                 })
             }
@@ -76,29 +73,29 @@ async function sendMails({ message, emailList }) {
 
         if (!response.ok) {
             console.error("Resend API error:", result);
+
             throw new Error(
-                result.message || `Resend error: ${response.status}`
+                result.message || `Resend API returned status ${response.status}`
             );
         }
 
         console.log(
-            `Email accepted for ${recipient}. ID: ${result.id}`
+            `Email accepted for ${recipient}. Resend ID: ${result.id}`
         );
     }
 
-    return "Success";
+    return true;
 }
 
-
-// Test route
+// Health-check route
 app.get("/", (req, res) => {
-    res.send("Bulk Mail Backend is running!");
+    res.status(200).send("BulkMail Backend is running!");
 });
 
-// Send email route
+// Send-email route
 app.post("/sendemail", async (req, res) => {
     try {
-        const { message, emailList } = req.body;
+        const { message, emailList, subject } = req.body;
 
         if (
             typeof message !== "string" ||
@@ -106,8 +103,9 @@ app.post("/sendemail", async (req, res) => {
             !Array.isArray(emailList) ||
             emailList.length === 0 ||
             !emailList.every(
-                email => typeof email === "string" &&
-                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                (email) =>
+                    typeof email === "string" &&
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
             )
         ) {
             return res.status(400).json({
@@ -116,23 +114,35 @@ app.post("/sendemail", async (req, res) => {
             });
         }
 
-        await sendMails({ message, emailList });
+        // Remove duplicate addresses and surrounding whitespace
+        const uniqueEmails = [
+            ...new Set(emailList.map((email) => email.trim().toLowerCase()))
+        ];
 
-        res.json({
+        await sendMails({
+            message: message.trim(),
+            emailList: uniqueEmails,
+            subject:
+                typeof subject === "string" && subject.trim()
+                    ? subject.trim()
+                    : undefined
+        });
+
+        return res.status(200).json({
             success: true,
-            message: "Emails sent successfully!"
+            message: `Email requests accepted for ${uniqueEmails.length} recipient(s).`
         });
     } catch (error) {
         console.error("Error sending emails:", error.message);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: "Failed to send emails."
+            message: error.message || "Failed to send emails."
         });
     }
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server Started on port ${PORT}`);
+    console.log(`BulkMail backend started on port ${PORT}`);
 });
