@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration
 const corsOptions = {
     origin: [
+        "https://bulkmail-n2zx.vercel.app",
         "https://depfront.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000"
