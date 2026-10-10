@@ -9,9 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
+
 const corsOptions = {
     origin: [
         "https://bulkmail-n2zx.vercel.app",
+        "https://bulkmail-n2zx-git-main-sethumadhavan8008-coder.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000"
     ],
@@ -21,6 +23,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
 
 // MongoDB connection
 if (process.env.MONGODB_URI) {
