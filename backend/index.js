@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration
 const corsOptions = {
     origin: [
-        "https://bulkmail-n2zx.vercel.app",
         "https://depfront.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000"
@@ -52,16 +51,44 @@ const emailTemplate = (message, recipient) => ({
 });
 
 // Send emails
+
 async function sendMails({ message, emailList }) {
     for (const recipient of emailList) {
-        await transporter.sendMail(
-            emailTemplate(message, recipient)
+        const response = await fetch(
+            "https://api.resend.com/emails",
+            {
+                method: "POST",
+                headers: {
+                    "Authorization":
+                        `Bearer ${process.env.RESEND_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    from: process.env.EMAIL_FROM,
+                    to: [recipient],
+                    subject: "Message from BulkMail",
+                    text: message
+                })
+            }
         );
-        console.log(`Email sent to ${recipient}`);
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error("Resend API error:", result);
+            throw new Error(
+                result.message || `Resend error: ${response.status}`
+            );
+        }
+
+        console.log(
+            `Email accepted for ${recipient}. ID: ${result.id}`
+        );
     }
 
     return "Success";
 }
+
 
 // Test route
 app.get("/", (req, res) => {
